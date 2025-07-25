@@ -7,8 +7,20 @@ import pytz
 import telebot
 from telebot import types
 from dotenv import load_dotenv
+from flask import Flask
 
 load_dotenv()
+
+# Flask для Render
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Phuket Beach Bot is running! 🏖️"
+
+@app.route('/health')
+def health():
+    return "OK", 200
 
 bot = telebot.TeleBot(os.environ.get('BOT_TOKEN'))
 
@@ -201,8 +213,8 @@ def schedule_checker():
         schedule.run_pending()
         time.sleep(60)
 
-# Запуск бота
-if __name__ == '__main__':
+# Функция для запуска бота
+def run_bot():
     setup_schedule()
     
     # Запускаем планировщик в отдельном потоке
@@ -214,3 +226,14 @@ if __name__ == '__main__':
     
     # Запускаем бота
     bot.polling(none_stop=True)
+
+# Запуск Flask и бота
+if __name__ == '__main__':
+    # Запускаем бота в отдельном потоке
+    bot_thread = threading.Thread(target=run_bot)
+    bot_thread.daemon = True
+    bot_thread.start()
+    
+    # Запускаем Flask
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
